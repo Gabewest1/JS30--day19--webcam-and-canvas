@@ -5,6 +5,7 @@ const strip = document.querySelector('.strip');
 const snap = document.querySelector('.snap');
 
 video.addEventListener("canplay", paintToCanvas)
+getVideo()
 
 function getVideo() {
     navigator.mediaDevices.getUserMedia({ video: true, audio: false })
@@ -24,6 +25,12 @@ function paintToCanvas() {
 
     setInterval(() => {
         ctx.drawImage(video, 0, 0, width, height)
+        let pixels = ctx.getImageData(0, 0, width, height)
+
+        let effect = getEffect()
+        pixels = effect(pixels)
+
+        ctx.putImageData(pixels, 0, 0)
     }, 16)
 }
 
@@ -38,4 +45,67 @@ function takePhoto() {
     link.innerHTML = `<img src=${data} alt="handsome person" />`
     strip.insertBefore(link, strip.firstChild)
 }
-getVideo()
+
+function redEffect(pixels) {
+    for (var i = 0; i < pixels.data.length; i += 4) {
+        pixels.data[i] = pixels.data[i] + 100
+        pixels.data[i + 1] = pixels.data[i + 1] - 50
+        pixels.data[i + 2] = pixels.data[i + 2] * .5 
+    }
+
+    return pixels
+}
+
+function rgbSplit(pixels) {
+    for (var i = 0; i < pixels.data.length; i += 4) {
+        pixels.data[i - 150] = pixels.data[i]
+        pixels.data[i + 100] = pixels.data[i + 1]
+        pixels.data[i - 150] = pixels.data[i + 2]
+    }
+
+    return pixels
+}
+
+function greenScreen(pixels) {
+    const levels = {}
+
+    document.querySelectorAll(".rgb input").forEach(input => {
+        levels[input.name] = input.value
+    })
+    console.log("AYYY:", levels)
+    for (var i = 0; i < pixels.data.length; i += 4) {
+        let red = pixels.data[i]
+        let green = pixels.data[i + 1]
+        let blue = pixels.data[i + 2]
+        let alpha = pixels.data[i + 3]
+
+        if (red >= levels.rmin
+            && green >= levels.gmin
+            && blue >= levels.bmin
+            && red <= levels.rmax
+            && green <= levels.gmax
+            && blue <= levels.bmax
+        ) {
+            pixels.data[i + 3] = 0
+        }
+    }
+
+    return pixels
+}
+
+function getEffect() {
+    const effectStrategies = {
+        "redEffect": redEffect,
+        "splitEffect": rgbSplit,
+        "greenEffect": greenScreen,
+        "default": (pixels) => pixels
+    }
+    const effects = Array.from(document.querySelectorAll("input[name=effect]"))
+    const selectedEffect = effects.find(effect => effect.checked)
+
+    if (selectedEffect) {
+        return effectStrategies[selectedEffect.value]
+    } else {
+        return effectStrategies.default
+    }
+}

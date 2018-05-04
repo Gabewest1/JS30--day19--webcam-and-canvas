@@ -9,7 +9,21 @@
 
   <div class="photobooth">
     <div class="controls">
-      <button onClick="takePhoto()">Take Photo</button>
+      <div>
+        <button onClick="takePhoto()">Take Photo</button>
+        <label>
+          <input type="radio" name="effect" value="redEffect">
+          Red Effect
+        </label>
+        <label>
+          <input type="radio" name="effect" value="splitEffect">
+          Split Effect
+        </label>
+        <label>
+          <input type="radio" name="effect" value="greenEffect">
+          RGB Sliders Effect
+        </label>
+      </div>
       <div class="rgb">
         <label for="rmin">Red Min:</label>
         <input type="range" min=0 max=255 name="rmin">
